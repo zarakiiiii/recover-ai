@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI, HTTPException, status
 
+from app.api.recovery import router as recovery_router
 from app.core.config import settings
 from app.db.init_db import check_db_connection, init_db
 
@@ -32,9 +33,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=f"{settings.PROJECT_NAME} API",
     version="0.1.0",
-    description="Backend service and database foundation for RecoverAI",
+    description="Backend service and API for RecoverAI",
     lifespan=lifespan,
 )
+
+# Register API routers
+app.include_router(recovery_router, prefix="/api")
 
 
 @app.get("/health")

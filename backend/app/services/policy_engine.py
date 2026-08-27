@@ -64,8 +64,8 @@ class PolicyEngine:
             return PolicyEvaluation(
                 decision=PolicyDecision.HUMAN_REVIEW,
                 reason=(
-                    f"Payment amount (₹{amount_in_inr:,.2f}) exceeds the automated recovery limit of "
-                    f"₹{HIGH_VALUE_THRESHOLD_INR:,.2f}. Escalated to human review."
+                    f"Payment amount (INR {amount_in_inr:,.2f}) exceeds the automated recovery limit of "
+                    f"INR {HIGH_VALUE_THRESHOLD_INR:,.2f}. Escalated to human review."
                 ),
                 allowed_action=PolicyAction.NONE,
             )
