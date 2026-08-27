@@ -26,3 +26,29 @@ class PolicyDecision(str, Enum):
 
 class RecoveryAction(str, Enum):
     PAYMENT_LINK = "PAYMENT_LINK"
+
+
+class Recoverability(str, Enum):
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+
+
+class FailureCategory(str, Enum):
+    RECOVERABLE = "RECOVERABLE"
+    UNCERTAIN = "UNCERTAIN"
+    NON_RECOVERABLE = "NON_RECOVERABLE"
+
+
+class PolicyAction(str, Enum):
+    PAYMENT_LINK = "PAYMENT_LINK"
+    NONE = "NONE"
+
+
+class FailureType(str, Enum):
+    NETWORK_ERROR = "NETWORK_ERROR"
+    BANK_ERROR = "BANK_ERROR"
+    CARD_DECLINED = "CARD_DECLINED"
+    EXPIRED_CARD = "EXPIRED_CARD"
+    INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS"
+    AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED"

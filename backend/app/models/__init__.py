@@ -2,7 +2,11 @@ from app.db.base import Base
 from app.models.audit_event import AuditEvent
 from app.models.customer import Customer
 from app.models.enums import (
+    FailureCategory,
+    FailureType,
+    PolicyAction,
     PolicyDecision,
+    Recoverability,
     RecoveryAction,
     RecoveryAttemptStatus,
     RecoveryCaseStatus,
@@ -22,4 +26,8 @@ __all__ = [
     "RecoveryAttemptStatus",
     "PolicyDecision",
     "RecoveryAction",
+    "Recoverability",
+    "FailureCategory",
+    "PolicyAction",
+    "FailureType",
 ]
