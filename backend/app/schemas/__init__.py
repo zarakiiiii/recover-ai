@@ -6,7 +6,16 @@ from app.schemas.recovery import (
     PaymentDetail,
     RecoveryAttemptDetail,
     RecoveryCaseDetailResponse,
+    RecoveryExecutionResponse,
     RecoveryOverviewResponse,
+)
+from app.schemas.recovery_agent import (
+    CustomerContext,
+    PaymentContext,
+    RecoveryAgentAction,
+    RecoveryAgentContext,
+    RecoveryChannel,
+    RecoveryRecommendation,
 )
 from app.schemas.risk import CustomerPaymentHistory, RiskAssessment
 
@@ -17,8 +26,15 @@ __all__ = [
     "RecoveryOverviewResponse",
     "CandidateItemResponse",
     "RecoveryCaseDetailResponse",
+    "RecoveryExecutionResponse",
     "CustomerDetail",
     "PaymentDetail",
     "RecoveryAttemptDetail",
     "AuditEventDetail",
+    "RecoveryChannel",
+    "RecoveryAgentAction",
+    "PaymentContext",
+    "CustomerContext",
+    "RecoveryAgentContext",
+    "RecoveryRecommendation",
 ]

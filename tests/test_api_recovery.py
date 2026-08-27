@@ -5,7 +5,7 @@ import pytest
 from app.db.seed import seed_database
 from app.db.session import SessionLocal
 from app.main import app
-from app.models import RecoveryCase
+from app.models import AuditEvent, PolicyDecision, RecoveryAttempt, RecoveryCase, RecoveryCaseStatus
 
 client = TestClient(app)
 
@@ -112,3 +112,91 @@ def test_get_recovery_case_detail_404_not_found():
     response = client.get(f"/api/recovery/cases/{random_uuid}")
     assert response.status_code == 404
     assert f"'{random_uuid}' was not found" in response.json()["detail"]
+
+
+def test_execute_approved_case_success():
+    """Verify POST /api/recovery/cases/{case_id}/execute successfully executes an APPROVED case."""
+    with SessionLocal() as db:
+        approved_case = db.query(RecoveryCase).filter(RecoveryCase.policy_decision == PolicyDecision.APPROVED).first()
+        assert approved_case is not None
+        case_id = str(approved_case.id)
+
+    response = client.post(f"/api/recovery/cases/{case_id}/execute")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["recovery_case_id"] == case_id
+    assert "attempt_id" in data
+    assert data["attempt_number"] >= 1
+    assert data["status"] == "SUCCESS"
+    assert data["action"] == "PAYMENT_LINK"
+    assert data["channel"] in {"WHATSAPP", "SMS", "EMAIL"}
+    assert "https://pay.recoverai.internal/mock/" in data["payment_link"]
+    assert data["payment_link"] in data["message"]
+
+    # Verify message does not leak internal terms
+    forbidden_terms = ["risk_score", "policy_engine", "algorithm", "paise"]
+    for term in forbidden_terms:
+        assert term not in data["message"].lower()
+
+    # Verify database state updates
+    with SessionLocal() as db:
+        updated_case = db.query(RecoveryCase).filter(RecoveryCase.id == uuid.UUID(case_id)).first()
+        assert updated_case.status == RecoveryCaseStatus.RECOVERED
+
+        # Verify attempt record
+        attempt = db.query(RecoveryAttempt).filter(RecoveryAttempt.id == uuid.UUID(data["attempt_id"])).first()
+        assert attempt is not None
+        assert attempt.details["mock_execution"] is True
+
+        # Verify audit events persisted
+        audit_events = db.query(AuditEvent).filter(AuditEvent.recovery_case_id == uuid.UUID(case_id)).all()
+        event_types = {e.event_type for e in audit_events}
+        assert "RECOVERY_EXECUTION_STARTED" in event_types
+        assert "RECOVERY_EXECUTION_COMPLETED" in event_types
+
+
+def test_execute_blocked_case_fails():
+    """Verify executing a BLOCKED case is rejected with 400 Bad Request."""
+    with SessionLocal() as db:
+        blocked_case = db.query(RecoveryCase).filter(
+            RecoveryCase.policy_decision == PolicyDecision.BLOCKED,
+            RecoveryCase.status != RecoveryCaseStatus.STOPPED,
+        ).first()
+        assert blocked_case is not None
+        case_id = str(blocked_case.id)
+
+    response = client.post(f"/api/recovery/cases/{case_id}/execute")
+    assert response.status_code == 400
+    assert "not authorized" in response.json()["detail"].lower() or "blocked" in response.json()["detail"].lower()
+
+
+def test_execute_human_review_case_fails():
+    """Verify executing a HUMAN_REVIEW case is rejected with 400 Bad Request."""
+    with SessionLocal() as db:
+        review_case = db.query(RecoveryCase).filter(RecoveryCase.policy_decision == PolicyDecision.HUMAN_REVIEW).first()
+        assert review_case is not None
+        case_id = str(review_case.id)
+
+    response = client.post(f"/api/recovery/cases/{case_id}/execute")
+    assert response.status_code == 400
+    assert "not authorized" in response.json()["detail"].lower()
+
+
+def test_execute_stopped_case_fails():
+    """Verify executing a STOPPED case is rejected with 400 Bad Request."""
+    with SessionLocal() as db:
+        stopped_case = db.query(RecoveryCase).filter(RecoveryCase.status == RecoveryCaseStatus.STOPPED).first()
+        assert stopped_case is not None
+        case_id = str(stopped_case.id)
+
+    response = client.post(f"/api/recovery/cases/{case_id}/execute")
+    assert response.status_code == 400
+    assert "stopped" in response.json()["detail"].lower() or "maximum" in response.json()["detail"].lower()
+
+
+def test_execute_case_404_not_found():
+    """Verify executing non-existent case returns 404."""
+    random_uuid = str(uuid.uuid4())
+    response = client.post(f"/api/recovery/cases/{random_uuid}/execute")
+    assert response.status_code == 404

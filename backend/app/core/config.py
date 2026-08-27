@@ -22,6 +22,11 @@ class Settings(BaseSettings):
 
     DATABASE_URL_OVERRIDE: Optional[str] = None
 
+    # AI Recovery Agent Settings
+    AI_PROVIDER: str = "mock"
+    AI_MODEL: str = "gemini-1.5-flash"
+    AI_API_KEY: Optional[str] = None
+
     @computed_field
     @property
     def DATABASE_URL(self) -> str:

@@ -104,3 +104,15 @@ class RecoveryCaseDetailResponse(BaseModel):
     customer: CustomerDetail
     recovery_attempts: List[RecoveryAttemptDetail] = []
     audit_events: List[AuditEventDetail] = []
+
+
+class RecoveryExecutionResponse(BaseModel):
+    """Structured response returned upon executing an approved recovery case."""
+    recovery_case_id: uuid.UUID
+    attempt_id: uuid.UUID
+    attempt_number: int
+    status: RecoveryAttemptStatus
+    action: RecoveryAction
+    channel: str
+    payment_link: str
+    message: str
